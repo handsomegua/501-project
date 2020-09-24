@@ -1,0 +1,250 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+require(riotR)   #setup api
+library(rvest)
+api_key = "RGAPI-6edbb7f6-79ed-4d48-9991-ff40323c054c"   # store the api_key   do not use my api key
+
+
+```
+```{r}
+#top player list
+top_lux_list = c('xXI&agrave;nC&uacute;iXx',   # collect the top 100 lux player in North America server   I'm lazy= = So I finish this scrapping through Python. The code will be attached on the website
+  'TwitchTv Cupic',
+  'sha bi',
+  'Junnypoo',
+  'honeymoon fades',
+  'Swkeeee',
+  'Animalizerus',
+  'Spinaldash',
+  'Buffing',
+  'Not Cupic',
+  'Cupic',
+  'Twtv Cupic',
+  'BG1',
+  'Loracia',
+  'SupportSucks',
+  'D&atilde;nD&atilde;n',
+  'adc9',
+  'jman9587',
+  'lavender flower',
+  'LlBER0',
+  'thebigd1234',
+  'ZenV',
+  'Its Ashu',
+  'quix102',
+  'Zexing',
+  'ShiroJoJo',
+  'SUPERSTAR1',
+  'PP90M1',
+  'Cute Asian Loli',
+  'Le Tigre',
+  'opikt',
+  'Le Nugul',
+  'RŃG UZl',
+  'kaemon',
+  'Luxuries',
+  'Deist',
+  'Bird ls The Word',
+  'Good Boi',
+  'Proosia',
+  'BakaEric2',
+  'Unhinged',
+  'Sharpe',
+  'Itzmebrandon424',
+  'XiaoGuai',
+  'Erick Dota',
+  'MC Soobgyu',
+  'Tcross',
+  'amp',
+  'Hinata Shoyo',
+  'boblovepie666',
+  'koshkyra',
+  'Heatherly',
+  'Tribute to a Kin',
+  'jonjiluxzzZ',
+  'MING KING',
+  '&Scaron;UPP&Oslash;RT KING&ETH;&Oslash;M',
+  'pupnewfster',
+  'TonyProplayer',
+  'PykeOpath',
+  'Yubbie',
+  'Kaoh Taiyaki',
+  'Karena',
+  'KaelTheGreat',
+  'King Dack',
+  'Cinnafen',
+  'Darling Princess',
+  'NotSmurfingTodei',
+  'TwTv NewLuda',
+  'NoSlipKnot',
+  'PositivePsych',
+  'z o o o o o o m',
+  'Daption',
+  'SKT T1 Happylife',
+  'cafe mocha',
+  'Els&auml;',
+  'Verdauntless',
+  'EG Junsik',
+  'Ph&ouml;en&iuml;x',
+  'Zeuce',
+  '&Icirc;r&ETH;&aelig;n&ograve;s',
+  'a little star',
+  'Zemog',
+  'Andoqs',
+  'EleJiggle',
+  'fae walker',
+  'pWebb',
+  'ThunderQueef',
+  'Głace',
+  'KAYLE OTP BABY',
+  'Awriana Grande',
+  'Wakanda',
+  'Kurama Ssj2',
+  'GoIdie Lux',
+  'MKIT RAIN nafla',
+  'Monkay',
+  'Amie',
+  'Lei',
+  'Tharona Shade',
+  'Crownguard',
+  'Borb')
+```
+```{r}
+for (i in 1:100){   # remove whitespace for the name: otehrwise R can not read those name
+  top_lux_list[i] = str_replace_all(toString(top_lux_list[i]),pattern = " ", replacement = "")
+}
+```
+```{r}
+top_lux_list
+```
+
+
+```{r}
+getaccountId <- function(namelist){
+  accountId<-c()
+  error_list <- c() 
+  for (name in namelist){
+    fit <-try(   #using try catch function to store the accountId for each player. For the error part. Taking the result into NA which will be easy for the later Data cleaning 
+    (riotR::get_user_id(name,'na1',api = api_key)$accountId))
+    if("try-error" %in% class(fit))
+    {
+      accountId<-c(accountId,NA)
+      next
+    }else{
+      print(fit)
+      accountId<-c(accountId,fit)
+    }
+  }
+  
+  return(accountId)
+}
+account_id_lux <- getaccountId(top_lux_list)
+```
+```{r}
+league <- riotR::league$new(api = api_key,'na1')   #get league info 
+account_id_lux_cleaned <-  account_id_lux[-which(is.na(account_id_lux))]
+get_lux_game_id <-c()
+for (i in 1 : length(account_id_lux)){    #试试看用apply 
+  fit <-try(httr::content(league$match$by_account(account_id_lux_cleaned[i])))
+  if("try-error" %in% class(fit)){
+  next}else{  
+  for ( j in 1:length(fit$matches)){
+    if(fit$matches[[j]]$champion==99){
+      get_lux_game_id <- c(get_lux_game_id,fit$matches[[j]]$gameId)
+    }
+  }
+}
+}  
+
+  
+  
+#get_game_info <- httr::content(league$match$by_account(account_id_lux[3]))   #get exact player's game info
+#for( i in 1: 100){
+#  if (get_lux_info$matches[[i]]$champion == 99){
+#    get_lux_game_id <- c(get_lux_game_id,get_lux_info$matches[[i]]$gameId)
+#  }
+#}
+
+
+```
+
+
+
+
+```{r}
+lux_stats <- data.frame(stats = numeric(0))
+error_game <- c()
+for (i in 1: length(get_lux_game_id)){
+  fit2 <- try(httr::content(league$match$by_matchId(get_lux_game_id[i])))
+  print(i)
+  Sys.sleep(1)
+  if("try-error" %in% class(fit2)){
+    error_game <- c(error_game,get_lux_game_id[i])
+    next
+  }else{
+    for (j in 1:length(fit2$participants)){
+      if(fit2$participants[[j]]$championId ==99){
+        item_list <- c(fit2$participants[[j]]$stats$item0,fit2$participants[[j]]$stats$item1,fit2$participants[[j]]$stats$item2,fit2$participants[[j]]$stats$item3,fit2$participants[[j]]$stats$item4,fit2$participants[[j]]$stats$item5,fit2$participants[[j]]$stats$item6,get_lux_game_id[i],fit2$gameDuration,fit2$participants[[j]]$stats$goldSpent,fit2$participants[[j]]$stats$win)
+         lux_stats <- rbind(lux_stats,item_list)
+      }
+    }
+}
+}
+names(lux_stats) <- c('item0','item1','item2','item3','item4','item5','item6','accountId','time','goldspent','gameresult')
+
+#item$data$后面可以跟着
+```
+
+```{r}
+#check for the error place
+for (i in 1: length(error_game)){
+  fit2 <- try(httr::content(league$match$by_matchId(error_game[i])))
+  if("try-error" %in% class(fit2)){
+    next
+  }else{
+    for (j in 1:length(fit2$participants)){
+      if(fit2$participants[[j]]$championId ==99){
+        item_list <- c(fit2$participants[[j]]$stats$item0,fit2$participants[[j]]$stats$item1,fit2$participants[[j]]$stats$item2,fit2$participants[[j]]$stats$item3,fit2$participants[[j]]$stats$item4,fit2$participants[[j]]$stats$item5,fit2$participants[[j]]$stats$item6,get_lux_game_id[i],fit2$gameDuration,fit2$participants[[j]]$stats$goldSpent,fit2$participants[[j]]$stats$win)
+         lux_stats <- rbind(lux_stats,item_list)
+      }
+    }
+}
+}
+
+```
+
+
+
+
+
+```{r}
+#save the result(current)
+
+write.csv(lux_stats,'lux_stats.csv')
+```
+
+
+
+
+
+
+```
+
+
+
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
