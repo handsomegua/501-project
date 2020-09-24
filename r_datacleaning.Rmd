@@ -1,0 +1,67 @@
+---
+title: "r_datacleaning"
+author: "Sichen Lin"
+date: "2020/9/24"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r}
+library(ggplot2)
+```
+
+
+
+
+```{r cars}
+lux_df = read.csv("lux_stats.csv",header = TRUE, stringsAsFactors = FALSE)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+#draw the preivous data set: relationship between time and gold spent
+previous_plot =  ggplot(lux_df,aes(x = time, y = goldspent)) + geom_point(shape = 18)
+previous_plot
+```
+
+
+```{r}
+#outlier detection 
+
+outlier_location <- sapply(lux_df, function(x){which(x %in%boxplot.stats(x)$out )})    # detect the outlier and merge
+outlier_location_total <- c(sort(unique(c(outlier_location$time,outlier_location$goldspent))))
+cleaned_lux_df <- lux_df
+cleaned_lux_df <- cleaned_lux_df[-outlier_location_total,]        #delete the outlier 
+
+rownames(cleaned_lux_df) <- 1:nrow(cleaned_lux_df)   #reset index
+```
+```{r}
+# plot  the cleaned data set 
+cleaned_plot = ggplot(cleaned_lux_df,aes(x = time, y = goldspent)) + geom_point(shape = 18)
+cleaned_plot
+```
+```{r}
+length(outlier_location_total)
+
+```
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
