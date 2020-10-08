@@ -1,0 +1,208 @@
+---
+title: "501_hw3"
+author: "Sichen Lin"
+date: "2020/10/8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+```{r}
+
+library(philentropy)  ## for distance() which offers 46 metrics
+library(factoextra) ## for cluster vis, silhouette, etc.
+library(purrr)
+library(caTools)
+library(dplyr)
+library(textstem)
+library(stringr)
+#install.packages("stylo")
+
+library(stats)
+library(NbClust)
+library(mclust)
+library(wordcloud)
+library(tm)
+library(slam)
+library(quanteda)
+library(SnowballC)
+library(arules)
+library(proxy)
+library(readr)
+```
+
+```{r cars}
+#get text data
+df <- readLines("DF_text_data.txt")
+corpus <- Corpus(DirSource('new_text_data'))
+```
+```{r}
+dtm <- DocumentTermMatrix(corpus,
+                         control = list(
+                           stopwords = TRUE, ## remove normal stopwords
+                           wordLengths=c(4, 10), ## get rid of words of len 3 or smaller or larger than 15
+                           removePunctuation = TRUE,
+                           removeNumbers = TRUE,
+                           tolower=TRUE,
+                           #stemming = TRUE,
+                           remove_separators = TRUE
+                           #stopwords = MyStopwords,
+                
+                           #removeWords(MyStopwords),
+                           #bounds = list(global = c(minTermFreq, maxTermFreq))
+                         ))
+df_corpus <- as.data.frame(as.matrix(dtm))
+```
+```{r}
+#determine the best k
+fviz_nbclust(df_corpus, method = "silhouette", 
+             FUN = hcut, k.max = 30)
+fviz_nbclust(df_corpus, method = "wss", 
+             FUN = hcut, k.max = 30)
+fviz_nbclust(df_corpus, method = "gap_stat", 
+             FUN = hcut, k.max = 30)
+```
+```{r}
+norm_text_df <- apply(as.matrix(dtm),1,function(i) round(i/sum(i),2))
+norm_text_df_t <- t(norm_text_df)
+kmeans_text <- kmeans(norm_text_df_t,2,nstart = 25)
+print(kmeans_text)
+#see each cluster
+kmeans_text$cluster
+kmeans_text$size
+cbind(df_corpus, cluster = kmeans_text$cluster)
+fviz_cluster(kmeans_text, df_corpus, 
+             main="Euclidean", repel = TRUE)
+```
+```{r}
+#Hierachical Clustering 
+#different distance matrix
+Dist_corpus_eu <- dist(df_corpus,method = 'minkowski',p = 2) #euclidean 
+Dist_corpus_man <- dist(df_corpus,method = 'minkowski',p = 1)# manhattan
+Dist_corpus_cos <- dist(df_corpus,method = 'cosine') #cosine similarity
+
+#hclust: 
+#eu
+(HClust_SmallCorp <- hclust(Dist_corpus_eu, method = "ward.D" ))
+plot(HClust_SmallCorp, cex=0.9, hang=-1, main = "Minkowski p=2 (Euclidean)")
+rect.hclust(HClust_SmallCorp, k=4)
+#man
+(HClust_SmallCorp <- hclust(Dist_corpus_man, method = "ward.D" ))
+plot(HClust_SmallCorp, cex=0.9, hang=-1, main = "Minkowski p=1 (Manhattan)")
+rect.hclust(HClust_SmallCorp, k=4)
+#cos
+(HClust_SmallCorp <- hclust(Dist_corpus_cos, method = "ward.D" ))
+plot(HClust_SmallCorp, cex=0.9, hang=-1, main = 'Cosine Similarity')
+rect.hclust(HClust_SmallCorp, k=4)
+```
+```{r}
+#Dbscan
+library(dbscan)
+db <- hdbscan(norm_text_df_t,minPts =2)
+plot(db, col = db$cluster+1)
+```
+```{r}
+#record data
+record_df <- read.csv('DF_501.csv',header = TRUE)
+record_df_label <- record_df$tags
+cleaned_record_df <- record_df[,!names(record_df) %in% c("Title","name","blurb","tags","X")]
+```
+```{r}
+#select distance 
+Dist_record_eu <- dist(cleaned_record_df,method = "minkowski",p=2)
+Dist_record_cos <- dist(cleaned_record_df,method = "cosine")
+Dist_record_man <- dist(cleaned_record_df,method = "minkowski", p=1)
+```
+
+
+```{r}
+#determine the best k 
+#silhouette
+fviz_nbclust(as.matrix(Dist_record_eu), method = "silhouette", 
+                      FUN = hcut, k.max = 10)
+#elbow
+fviz_nbclust(
+  as.matrix(Dist_record_eu), 
+  kmeans, 
+  k.max = 10,
+  method = "wss",
+  diss = get_dist(as.matrix(Dist_record_eu), method = "manhattan")
+)
+#gap statistic
+fviz_nbclust(as.matrix(Dist_record_eu),method = "gap_stat",FUN = hcut,k.max = 10)
+
+#from the graph below: we select k = 2 and k = 5(from elbow)
+```
+
+```{r}
+#kmeans clustering using k = 2 and 5
+kmeans_record_2 <- kmeans(cleaned_record_df,2,nstart=25)
+kmeans_record_5 <- kmeans(cleaned_record_df,5,nstart = 25)
+record_result_2 <- cbind(cleaned_record_df,record_df_label,kmeans_record_2$cluster)
+record_result_5 <- cbind(cleaned_record_df,record_df_label,kmeans_record_5$cluster)
+#visualize the cluster
+record_2_vis <- fviz_cluster(kmeans_record_2,cleaned_record_df,main = 'Euclidean')
+record_2_vis
+record_5_vis <- fviz_cluster(kmeans_record_5,cleaned_record_df,main = 'Euclidean')
+record_5_vis
+```
+
+```{r}
+#hclust
+#select distance 
+Dist_record_eu <- dist(cleaned_record_df,method = "minkowski",p=2)
+Dist_record_cos <- dist(cleaned_record_df,method = "cosine")
+Dist_record_man <- dist(cleaned_record_df,method = "minkowski", p=1)
+```
+```{r}
+Hclust_eu <- hclust(Dist_record_eu,method = 'ward.D2')
+plot(Hclust_eu,cex = 0.9, hang = 1, main = "hclust under euclidean distance")
+rect.hclust(Hclust_eu,k = 2,border = 'blue')
+rect.hclust(Hclust_eu,k=5)
+Hclust_cos <- hclust(Dist_record_cos,method = 'ward.D2')
+plot(Hclust_cos,cex = 0.9, hang = 1, main = "hclust under cosine similarity")
+rect.hclust(Hclust_cos,k=2,border = 'blue')
+rect.hclust(Hclust_cos,k=5)
+Hclust_man <- hclust(Dist_record_man,method = 'ward.D2')
+plot(Hclust_man,cex = 0.9,hang = 1,main = 'hclust under manhattan distance')
+rect.hclust(Hclust_man,k=2, border = "blue")
+rect.hclust(Hclust_man,k=5)
+```
+
+```{r}
+#db clustering
+library(dbscan)
+db_eu <- hdbscan(Dist_record_eu,minPts =10)
+db_eu
+plot(db_eu,col = db_eu$cluster+1)
+db_cos <-hdbscan(Dist_record_cos,minPts =10)
+db_cos
+plot(db_cos,col = db_cos$cluster+1)
+db_man <-hdbscan(Dist_record_man,minPts =10)
+db_man
+plot(db_man, col = db_man$cluster+1)
+
+#we could see from density base clustering, the optimal clustering number will be 2 under different circunstance 
+```
+
+
+
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
