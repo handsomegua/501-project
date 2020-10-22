@@ -1,0 +1,450 @@
+---
+title: "arn_501"
+author: "Sichen Lin"
+date: "2020/10/19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(igraph)
+library(ggplot2)
+library(arules)
+library(arulesViz)
+library(networkD3)
+library(tidygraph)
+library(ggraph)
+library(ggnet)
+library(network)
+library(ggplot2)
+```
+
+```{r}
+#load data 
+lux_df = read.csv("lux_stats.csv",header = TRUE, stringsAsFactors = FALSE)
+lux_df_for_arm =  lux_df[,-c(1,9,10,11,12)]
+
+```
+```{r}
+turn_na <- function(x){
+  if (x == 0){
+    ret <- NaN
+  }
+  else{
+    ret <- x
+  }
+  return(ret)
+}
+#dealing the dataset to transaction data
+for (i in 1:dim(lux_df_for_arm)[1]){
+  lux_df_for_arm[i,] = sapply(lux_df_for_arm[i,],turn_na)
+}
+lux_df_for_arm
+```
+
+```{r}
+item_df <- read.csv('item_data.csv')
+item_df <- item_df[,-1]   # get the item data
+item_df
+```
+```{r}
+lux_df_for_arm<- lux_df_for_arm[,-7]
+```
+
+```{r}
+library(dplyr)
+#test_df <- lux_df_for_arm[1:5,]
+for(i in 1:dim(lux_df_for_arm)[2]){
+  lux_df_for_arm[,i] <- item_df$X1[match(lux_df_for_arm[,i],item_df$X0)]
+}
+
+```
+
+
+```{r}
+lux_df_for_arm_final <- lux_df_for_arm[complete.cases(lux_df_for_arm),]
+write.csv(lux_df_for_arm_final,'arm_stats.csv')
+```
+
+
+```{r}
+DF <- read.transactions("arm_stats.csv",
+                           rm.duplicates = TRUE, 
+                           format = "basket",  ##if you use "single" also use cols=c(1,2)
+                           sep=",",  ## csv file
+                           cols=1,header = TRUE)
+```
+```{r}
+lux_df_for_arm
+lux_df_for_arm_final
+```
+
+```{r}
+lux_rules = arules::apriori(DF, parameter = list(support=.1, 
+                                                 confidence=.4, minlen=2))
+inspect(lux_rules)
+itemFrequencyPlot(DF, topN=15, type="absolute")
+```
+```{r}
+#Sort by sup
+SortedRulesLux <- sort(lux_rules, by="support", decreasing=TRUE)
+inspect(SortedRulesLux[1:15])
+(summary(SortedRulesLux))
+#itemFrequencyPlot(DF, topN=20)
+plot(SortedRulesLux[1:15],method="graph")
+```
+```{r}
+#Sort by confidence 
+SortedRulesLux_confidence <- sort(lux_rules, by="confidence", decreasing=TRUE)
+inspect(SortedRulesLux_confidence[1:15])
+(summary(SortedRulesLux_confidence))
+plot(SortedRulesLux_confidence[1:15],method = 'graph')
+```
+
+```{r}
+#Sort by Lift
+library(tcltk)
+subrules_lux_lift <- head(sort(lux_rules, by="lift"),15)
+inspect(subrules_lux_lift)
+plot(subrules_lux_lift,method = 'graph')
+```
+
+```{r}
+lux_rules
+```
+
+```{r}
+#network 
+#1 covert rules to dataframe 
+lux_rules_DF <- DATAFRAME(lux_rules,separate = TRUE)
+#convert to char
+lux_rules_DF$LHS <- as.character(lux_rules_DF$LHS)
+lux_rules_DF$RHS <- as.character(lux_rules_DF$RHS)
+#remove all {}
+lux_rules_DF[] <-lapply(lux_rules_DF,gsub,pattern='[{]',replacement = '')
+lux_rules_DF[] <-lapply(lux_rules_DF,gsub,pattern='[}]',replacement = '')
+```
+```{r}
+lux_rules_DF
+```
+```{r}
+#Using sup
+## USING LIFT
+Rules_L<-lux_rules_DF[c(1,2,6)]
+names(Rules_L) <- c("SourceName", "TargetName", "Weight")
+head(Rules_L,30)
+
+## USING SUP
+Rules_S<-lux_rules_DF[c(1,2,3)]
+names(Rules_S) <- c("SourceName", "TargetName", "Weight")
+head(Rules_S,30)
+
+## USING CONF
+Rules_C<-lux_rules_DF[c(1,2,4)]
+names(Rules_C) <- c("SourceName", "TargetName", "Weight")
+head(Rules_C,30)
+```
+```{r}
+(edgeList_C<-Rules_C[1:20,])
+(edgeList_S<-Rules_S[1:20,])
+(edgeList_L<-Rules_L[1:20,])
+```
+```{r}
+MyGraph_C <- igraph::simplify(igraph::graph.data.frame(edgeList_C, directed=TRUE))
+MyGraph_L <- igraph::simplify(igraph::graph.data.frame(edgeList_L, directed=TRUE))
+MyGraph_S <- igraph::simplify(igraph::graph.data.frame(edgeList_S, directed=TRUE))
+
+nodeList_C <- data.frame(nName = igraph::V(MyGraph_C)$name,ID = c(0:(igraph::vcount(MyGraph_C) - 1)))
+nodeList_L <- data.frame(nName = igraph::V(MyGraph_L)$name,ID = c(0:(igraph::vcount(MyGraph_L) - 1)))
+nodeList_S <- data.frame(nName = igraph::V(MyGraph_S)$name,ID = c(0:(igraph::vcount(MyGraph_S) - 1)))
+## Node Degree
+(nodeList_C <- cbind(nodeList_C, nodeDegree=igraph::degree(MyGraph_C, 
+                    v = igraph::V(MyGraph_C), mode = "all")))
+(nodeList_L <- cbind(nodeList_L, nodeDegree=igraph::degree(MyGraph_L, 
+                    v = igraph::V(MyGraph_L), mode = "all")))
+(nodeList_S <- cbind(nodeList_S, nodeDegree=igraph::degree(MyGraph_S, 
+                    v = igraph::V(MyGraph_S), mode = "all")))
+```
+```{r}
+## Betweenness
+BetweenNess_C <- igraph::betweenness(MyGraph_C, 
+      v = igraph::V(MyGraph_C), 
+      directed = TRUE) 
+BetweenNess_L <- igraph::betweenness(MyGraph_L, 
+      v = igraph::V(MyGraph_L), 
+      directed = TRUE) 
+BetweenNess_S <- igraph::betweenness(MyGraph_S, 
+      v = igraph::V(MyGraph_S), 
+      directed = TRUE) 
+
+(nodeList_C <- cbind(nodeList_C, nodeBetweenness=BetweenNess_C/10))
+(nodeList_L <- cbind(nodeList_L, nodeBetweenness=BetweenNess_L/10))
+(nodeList_S <- cbind(nodeList_S, nodeBetweenness=BetweenNess_S/10))
+```
+```{r}
+getNodeID_C <- function(x){
+  which(x == igraph::V(MyGraph_C)$name) - 1  #IDs start at 0
+}
+getNodeID_L <- function(x){
+  which(x == igraph::V(MyGraph_L)$name) - 1  #IDs start at 0
+}
+
+getNodeID_S <- function(x){
+  which(x == igraph::V(MyGraph_S)$name) - 1  #IDs start at 0
+}
+
+
+edgeList_C <- plyr::ddply(
+  edgeList_C, .variables = c("SourceName", "TargetName" , "Weight"), 
+  function (x) data.frame(SourceID = getNodeID_C(x$SourceName), 
+                          TargetID = getNodeID_C(x$TargetName)))
+
+edgeList_L <- plyr::ddply(
+  edgeList_L, .variables = c("SourceName", "TargetName" , "Weight"), 
+  function (x) data.frame(SourceID = getNodeID_L(x$SourceName), 
+                          TargetID = getNodeID_L(x$TargetName)))
+
+edgeList_S <- plyr::ddply(
+  edgeList_S, .variables = c("SourceName", "TargetName" , "Weight"), 
+  function (x) data.frame(SourceID = getNodeID_S(x$SourceName), 
+                          TargetID = getNodeID_S(x$TargetName)))
+
+
+```
+```{r}
+########################################################################
+##############  Dice Sim ################################################
+###########################################################################
+#Calculate Dice similarities between all pairs of nodes
+#The Dice similarity coefficient of two vertices is twice 
+#the number of common neighbors divided by the sum of the degrees 
+#of the vertices. Method dice calculates the pairwise Dice similarities 
+#for some (or all) of the vertices. 
+DiceSim_C <- igraph::similarity.dice(MyGraph_C, vids = igraph::V(MyGraph_C), mode = "all")
+DiceSim_L <- igraph::similarity.dice(MyGraph_L, vids = igraph::V(MyGraph_L), mode = "all")
+DiceSim_S <- igraph::similarity.dice(MyGraph_S, vids = igraph::V(MyGraph_S), mode = "all")
+
+
+#Create  data frame that contains the Dice similarity between any two vertices
+F1_C <- function(x) {data.frame(diceSim = DiceSim_C[x$SourceID +1, x$TargetID + 1])}
+F1_L <- function(x) {data.frame(diceSim = DiceSim_L[x$SourceID +1, x$TargetID + 1])}
+F1_S <- function(x) {data.frame(diceSim = DiceSim_S[x$SourceID +1, x$TargetID + 1])}#Place a new column in edgeList with the Dice Sim
+
+edgeList_C <- plyr::ddply(edgeList_C,
+                        .variables=c("SourceName", "TargetName", "Weight", 
+                                               "SourceID", "TargetID"), 
+                        function(x) data.frame(F1_C(x)))
+edgeList_L <- plyr::ddply(edgeList_L,
+                        .variables=c("SourceName", "TargetName", "Weight", 
+                                               "SourceID", "TargetID"), 
+                        function(x) data.frame(F1_L(x)))
+edgeList_S <- plyr::ddply(edgeList_S,
+                        .variables=c("SourceName", "TargetName", "Weight", 
+                                               "SourceID", "TargetID"), 
+                        function(x) data.frame(F1_S(x)))
+
+```
+```{r}
+##################################################################################
+##################   color #################################################
+######################################################
+COLOR_P_C <- colorRampPalette(c("#00FF00", "#FF0000"), 
+                            bias = nrow(edgeList_C), space = "rgb", 
+                            interpolate = "linear")
+(colCodes_C <- COLOR_P_C(length(unique(edgeList_C$diceSim))))
+edges_col_C <- sapply(edgeList_C$diceSim, 
+                    function(x) colCodes[which(sort(unique(edgeList_C$diceSim)) == x)])
+
+COLOR_P_L <- colorRampPalette(c("#00FF00", "#FF0000"), 
+                            bias = nrow(edgeList_L), space = "rgb", 
+                            interpolate = "linear")
+(colCodes_L <- COLOR_P_L(length(unique(edgeList_L$diceSim))))
+edges_col_L <- sapply(edgeList_L$diceSim, 
+                    function(x) colCodes[which(sort(unique(edgeList_L$diceSim)) == x)])
+
+COLOR_P_S <- colorRampPalette(c("#00FF00", "#FF0000"), 
+                            bias = nrow(edgeList_S), space = "rgb", 
+                            interpolate = "linear")
+(colCodes_S <- COLOR_P_S(length(unique(edgeList_S$diceSim))))
+edges_col_S <- sapply(edgeList_S$diceSim, 
+                    function(x) colCodes[which(sort(unique(edgeList_S$diceSim)) == x)])
+```
+
+```{r}
+D3_network_Lux_C <- networkD3::forceNetwork(
+  Links = edgeList_C, # data frame that contains info about edges
+  Nodes = nodeList_C, # data frame that contains info about nodes
+  Source = "SourceID", # ID of source node 
+  Target = "TargetID", # ID of target node
+  Value = "Weight", # value from the edge list (data frame) that will be used to value/weight relationship amongst nodes
+  NodeID = "nName", # value from the node list (data frame) that contains node description we want to use (e.g., node name)
+  Nodesize = "nodeBetweenness",  # value from the node list (data frame) that contains value we want to use for a node size
+  Group = "nodeDegree",  # value from the node list (data frame) that contains value we want to use for node color
+  height = 700, # Size of the plot (vertical)
+  width = 900,  # Size of the plot (horizontal)
+  fontSize = 20, # Font size
+  linkDistance = networkD3::JS("function(d) { return d.value*100; }"), # Function to determine distance between any two nodes, uses variables already defined in forceNetwork function (not variables from a data frame)
+  linkWidth = networkD3::JS("function(d) { return d.value; }"),# Function to determine link/edge thickness, uses variables already defined in forceNetwork function (not variables from a data frame)
+  opacity = 0.9, # opacity
+  zoom = TRUE, # ability to zoom when click on the node
+  opacityNoHover = 0.9, # opacity of labels when static
+  linkColour = "red"   ###"edges_col"red"# edge colors
+) 
+
+```
+```{r}
+D3_network_Lux_L <- networkD3::forceNetwork(
+  Links = edgeList_L, # data frame that contains info about edges
+  Nodes = nodeList_L, # data frame that contains info about nodes
+  Source = "SourceID", # ID of source node 
+  Target = "TargetID", # ID of target node
+  Value = "Weight", # value from the edge list (data frame) that will be used to value/weight relationship amongst nodes
+  NodeID = "nName", # value from the node list (data frame) that contains node description we want to use (e.g., node name)
+  Nodesize = "nodeBetweenness",  # value from the node list (data frame) that contains value we want to use for a node size
+  Group = "nodeDegree",  # value from the node list (data frame) that contains value we want to use for node color
+  height = 700, # Size of the plot (vertical)
+  width = 900,  # Size of the plot (horizontal)
+  fontSize = 20, # Font size
+  linkDistance = networkD3::JS("function(d) { return d.value*100; }"), # Function to determine distance between any two nodes, uses variables already defined in forceNetwork function (not variables from a data frame)
+  linkWidth = networkD3::JS("function(d) { return d.value; }"),# Function to determine link/edge thickness, uses variables already defined in forceNetwork function (not variables from a data frame)
+  opacity = 0.9, # opacity
+  zoom = TRUE, # ability to zoom when click on the node
+  opacityNoHover = 0.9, # opacity of labels when static
+  linkColour = "red"   ###"edges_col"red"# edge colors
+) 
+```
+```{r}
+D3_network_Lux_S <- networkD3::forceNetwork(
+  Links = edgeList_S, # data frame that contains info about edges
+  Nodes = nodeList_S, # data frame that contains info about nodes
+  Source = "SourceID", # ID of source node 
+  Target = "TargetID", # ID of target node
+  Value = "Weight", # value from the edge list (data frame) that will be used to value/weight relationship amongst nodes
+  NodeID = "nName", # value from the node list (data frame) that contains node description we want to use (e.g., node name)
+  Nodesize = "nodeBetweenness",  # value from the node list (data frame) that contains value we want to use for a node size
+  Group = "nodeDegree",  # value from the node list (data frame) that contains value we want to use for node color
+  height = 700, # Size of the plot (vertical)
+  width = 900,  # Size of the plot (horizontal)
+  fontSize = 20, # Font size
+  linkDistance = networkD3::JS("function(d) { return d.value*100; }"), # Function to determine distance between any two nodes, uses variables already defined in forceNetwork function (not variables from a data frame)
+  linkWidth = networkD3::JS("function(d) { return d.value; }"),# Function to determine link/edge thickness, uses variables already defined in forceNetwork function (not variables from a data frame)
+  opacity = 0.9, # opacity
+  zoom = TRUE, # ability to zoom when click on the node
+  opacityNoHover = 0.9, # opacity of labels when static
+  linkColour = "red"   ###"edges_col"red"# edge colors
+) 
+```
+
+
+
+
+```{r}
+#ggnet
+library(ggnet)
+library(network)
+library(ggplot2)
+```
+```{r}
+routes_network_C <- network(edgeList_C, vertex.attr = nodeList_C, matrix.type = "edgelist", ignore.eval = FALSE)
+plot(routes_network_C,vertex.cex=3)
+routes_network_L <- network(edgeList_L, vertex.attr = nodeList_L, matrix.type = "edgelist", ignore.eval = FALSE)
+plot(routes_network_L,vertex.cex=3)
+routes_network_S <- network(edgeList_S, vertex.attr = nodeList_S, matrix.type = "edgelist", ignore.eval = FALSE)
+plot(routes_network_S,vertex.cex=3)
+```
+
+
+
+
+```{r}
+#igraph=
+library(igraph)
+```
+```{r}
+routes_igraph_C <- graph_from_data_frame(d = edgeList_C, vertices = nodeList_C, directed = TRUE)
+plot(routes_igraph_C,edge.arrow.size = 0.2)
+routes_igraph_L <- graph_from_data_frame(d = edgeList_L, vertices = nodeList_L, directed = TRUE)
+plot(routes_igraph_C,edge.arrow.size = 0.2)
+routes_igraph_S <- graph_from_data_frame(d = edgeList_S, vertices = nodeList_S, directed = TRUE)
+plot(routes_igraph_C,edge.arrow.size = 0.2)
+```
+
+
+
+```{r}
+routes_igraph <- graph_from_data_frame(d = edgeList, vertices = nodeList, directed = TRUE)
+```
+```{r}
+
+```
+
+
+
+
+
+
+
+
+```{r}
+edgeList_C$Weight <- as.numeric(edgeList_C$Weight)
+te.net_C <- network(edgeList_C[,1:2])
+te.net_C %v% "size" <- ((sna::degree(te.net_C)))
+ggnet2(te.net_C,label = TRUE,color = 'red',node.size = 'size',layout.exp = 0.15,mode = 'fruchtermanreingold',label.color = 'black',edge.size = edgeList_C$Weight/1.5,arrow.size = 8)
+
+edgeList_L$Weight <- as.numeric(edgeList_L$Weight)
+te.net_L <- network(edgeList_L[,1:2])
+te.net_L %v% "size" <- ((sna::degree(te.net_L)))
+ggnet2(te.net_L,label = TRUE,color = 'red',node.size = 'size',layout.exp = 0.15,mode = 'fruchtermanreingold',label.color = 'black',edge.size = edgeList_L$Weight/1.5,arrow.size = 8)
+
+edgeList_S$Weight <- as.numeric(edgeList_S$Weight)
+te.net_S <- network(edgeList_S[,1:2])
+te.net_S %v% "size" <- ((sna::degree(te.net_S)))
+ggnet2(te.net_S,label = TRUE,color = 'red',node.size = 'size',layout.exp = 0.15,mode = 'fruchtermanreingold',label.color = 'black',edge.size = edgeList_S$Weight/1.5,arrow.size = 8)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
