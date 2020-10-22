@@ -1,0 +1,265 @@
+,0,1
+0,1001,Boots of Speed
+1,1004,Faerie Charm
+2,1006,Rejuvenation Bead
+3,1011,Giant's Belt
+4,1018,Cloak of Agility
+5,1026,Blasting Wand
+6,1027,Sapphire Crystal
+7,1028,Ruby Crystal
+8,1029,Cloth Armor
+9,1031,Chain Vest
+10,1033,Null-Magic Mantle
+11,1036,Long Sword
+12,1037,Pickaxe
+13,1038,B. F. Sword
+14,1039,Hunter's Talisman
+15,1041,Hunter's Machete
+16,1042,Dagger
+17,1043,Recurve Bow
+18,1052,Amplifying Tome
+19,1053,Vampiric Scepter
+20,1054,Doran's Shield
+21,1055,Doran's Blade
+22,1056,Doran's Ring
+23,1057,Negatron Cloak
+24,1058,Needlessly Large Rod
+25,1082,Dark Seal
+26,1083,Cull
+27,1400,Enchantment: Warrior
+28,1401,Enchantment: Cinderhulk
+29,1402,Enchantment: Runic Echoes
+30,1412,Enchantment: Warrior
+31,1413,Enchantment: Cinderhulk
+32,1414,Enchantment: Runic Echoes
+33,1416,Enchantment: Bloodrazor
+34,1419,Enchantment: Bloodrazor
+35,2003,Health Potion
+36,2006,Showdown Health Potion
+37,2009,Total Biscuit of Rejuvenation
+38,2010,Total Biscuit of Everlasting Will
+39,2015,Kircheis Shard
+40,2031,Refillable Potion
+41,2033,Corrupting Potion
+42,2047,Oracle's Extract
+43,2051,Guardian's Horn
+44,2052,Poro-Snax
+45,2054,Diet Poro-Snax
+46,2055,Control Ward
+47,2065,Shurelya's Reverie
+48,2138,Elixir of Iron
+49,2139,Elixir of Sorcery
+50,2140,Elixir of Wrath
+51,2403,Minion Dematerializer
+52,2419,Commencing Stopwatch
+53,2420,Stopwatch
+54,2421,Broken Stopwatch
+55,2422,Slightly Magical Boots
+56,2423,Perfectly Timed Stopwatch
+57,2424,Broken Stopwatch
+58,3001,Abyssal Mask
+59,3003,Archangel's Staff
+60,3004,Manamune
+61,3005,Atma's Reckoning
+62,3006,Berserker's Greaves
+63,3007,Archangel's Staff (Quick Charge)
+64,3008,Manamune (Quick Charge)
+65,3009,Boots of Swiftness
+66,3010,Catalyst of Aeons
+67,3020,Sorcerer's Shoes
+68,3022,Frozen Mallet
+69,3024,Glacial Shroud
+70,3025,Iceborn Gauntlet
+71,3026,Guardian Angel
+72,3027,Rod of Ages
+73,3028,Chalice of Harmony
+74,3029,Rod of Ages (Quick Charge)
+75,3030,Hextech GLP-800
+76,3031,Infinity Edge
+77,3033,Mortal Reminder
+78,3035,Last Whisper
+79,3036,Lord Dominik's Regards
+80,3040,Seraph's Embrace
+81,3041,Mejai's Soulstealer
+82,3042,Muramana
+83,3043,Muramana
+84,3044,Phage
+85,3046,Phantom Dancer
+86,3047,Ninja Tabi
+87,3048,Seraph's Embrace
+88,3050,Zeke's Convergence
+89,3052,Jaurim's Fist
+90,3053,Sterak's Gage
+91,3057,Sheen
+92,3065,Spirit Visage
+93,3067,Kindlegem
+94,3068,Sunfire Cape
+95,3070,Tear of the Goddess
+96,3071,Black Cleaver
+97,3072,Bloodthirster
+98,3073,Tear of the Goddess (Quick Charge)
+99,3074,Ravenous Hydra
+100,3075,Thornmail
+101,3076,Bramble Vest
+102,3077,Tiamat
+103,3078,Trinity Force
+104,3082,Warden's Mail
+105,3083,Warmog's Armor
+106,3084,Overlord's Bloodmail
+107,3085,Runaan's Hurricane
+108,3086,Zeal
+109,3087,Statikk Shiv
+110,3089,Rabadon's Deathcap
+111,3091,Wit's End
+112,3094,Rapid Firecannon
+113,3095,Stormrazor
+114,3100,Lich Bane
+115,3101,Stinger
+116,3102,Banshee's Veil
+117,3105,Aegis of the Legion
+118,3107,Redemption
+119,3108,Fiendish Codex
+120,3109,Knight's Vow
+121,3110,Frozen Heart
+122,3111,Mercury's Treads
+123,3112,Guardian's Orb
+124,3113,Aether Wisp
+125,3114,Forbidden Idol
+126,3115,Nashor's Tooth
+127,3116,Rylai's Crystal Scepter
+128,3117,Boots of Mobility
+129,3123,Executioner's Calling
+130,3124,Guinsoo's Rageblade
+131,3128,Deathfire Grasp
+132,3131,Sword of the Divine
+133,3133,Caulfield's Warhammer
+134,3134,Serrated Dirk
+135,3135,Void Staff
+136,3136,Haunting Guise
+137,3137,Dervish Blade
+138,3139,Mercurial Scimitar
+139,3140,Quicksilver Sash
+140,3142,Youmuu's Ghostblade
+141,3143,Randuin's Omen
+142,3144,Bilgewater Cutlass
+143,3145,Hextech Revolver
+144,3146,Hextech Gunblade
+145,3147,Duskblade of Draktharr
+146,3151,Liandry's Torment
+147,3152,Hextech Protobelt-01
+148,3153,Blade of the Ruined King
+149,3155,Hexdrinker
+150,3156,Maw of Malmortius
+151,3157,Zhonya's Hourglass
+152,3158,Ionian Boots of Lucidity
+153,3161,Spear of Shojin
+154,3165,Morellonomicon
+155,3170,Moonflair Spellblade
+156,3172,Zephyr
+157,3174,Athene's Unholy Grail
+158,3175,Head of Kha'Zix
+159,3179,Umbral Glaive
+160,3181,Sanguine Blade
+161,3184,Guardian's Hammer
+162,3190,Locket of the Iron Solari
+163,3191,Seeker's Armguard
+164,3193,Gargoyle Stoneplate
+165,3194,Adaptive Helm
+166,3196,Hex Core mk-1
+167,3197,Hex Core mk-2
+168,3198,Perfect Hex Core
+169,3200,Prototype Hex Core
+170,3211,Spectre's Cowl
+171,3222,Mikael's Crucible
+172,3285,Luden's Echo
+173,3330,Scarecrow Effigy (Trinket)
+174,3340,Warding Totem (Trinket)
+175,3348,Arcane Sweeper
+176,3361,Greater Stealth Totem (Trinket)
+177,3362,Greater Vision Totem (Trinket)
+178,3363,Farsight Alteration
+179,3364,Oracle Lens
+180,3371,Molten Edge
+181,3373,Forgefire Cape
+182,3374,Rabadon's Deathcrown
+183,3379,Infernal Mask
+184,3380,Obsidian Cleaver
+185,3382,Salvation
+186,3383,Circlet of the Iron Solari
+187,3384,Trinity Fusion
+188,3386,Zhonya's Paradox
+189,3387,Frozen Fist
+190,3388,Youmuu's Wraithblade
+191,3389,Might of the Ruined King
+192,3390,Luden's Pulse
+193,3400,'Your Cut'
+194,3410,Head of Kha'Zix
+195,3416,Head of Kha'Zix
+196,3422,Head of Kha'Zix
+197,3455,Head of Kha'Zix
+198,3504,Ardent Censer
+199,3508,Essence Reaver
+200,3513,Eye of the Herald
+201,3514,Eye of the Herald
+202,3520,Ghost Poro
+203,3599,Black Spear
+204,3600,Black Spear
+205,3671,Enchantment: Warrior
+206,3672,Enchantment: Cinderhulk
+207,3673,Enchantment: Runic Echoes
+208,3675,Enchantment: Bloodrazor
+209,3680,Frosted Snax
+210,3681,Super Spicy Snax
+211,3682,Espresso Snax
+212,3683,Rainbow Snax Party Pack!
+213,3684,Dawnbringer Snax
+214,3685,Nightbringer Snax
+215,3690,Cosmic Shackle
+216,3691,Singularity Lantern
+217,3692,Dark Matter Scythe
+218,3693,Gravity Boots
+219,3694,Cloak of Stars
+220,3695,Dark Star Sigil
+221,3706,Stalker's Blade
+222,3715,Skirmisher's Sabre
+223,3742,Dead Man's Plate
+224,3748,Titanic Hydra
+225,3751,Bami's Cinder
+226,3800,Righteous Glory
+227,3801,Crystalline Bracer
+228,3802,Lost Chapter
+229,3812,Death's Dance
+230,3814,Edge of Night
+231,3850,Spellthief's Edge
+232,3851,Frostfang
+233,3853,Shard of True Ice
+234,3854,Steel Shoulderguards
+235,3855,Runesteel Spaulders
+236,3857,Pauldrons of Whiterock
+237,3858,Relic Shield
+238,3859,Targon's Buckler
+239,3860,Bulwark of the Mountain
+240,3862,Spectral Sickle
+241,3863,Harrowing Crescent
+242,3864,Black Mist Scythe
+243,3901,Fire at Will
+244,3902,Death's Daughter
+245,3903,Raise Morale
+246,3905,Twin Shadows
+247,3907,Spellbinder
+248,3916,Oblivion Orb
+249,4001,Ghostwalkers (Melee Only)
+250,4003,Lifeline
+251,4004,Spectral Cutlass
+252,4101,Pridestalker's Blade
+253,4102,Enchantment: Warrior
+254,4103,Enchantment: Cinderhulk
+255,4104,Enchantment: Runic Echoes
+256,4105,Enchantment: Bloodrazor
+257,4201,Doran's Lost Shield
+258,4202,Doran's Lost Blade
+259,4203,Doran's Lost Ring
+260,4204,Doran's Lost Idol
+261,4401,Force of Nature
+262,4402,Innervating Locket
+263,4403,The Golden Spatula
