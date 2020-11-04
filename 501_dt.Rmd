@@ -1,0 +1,106 @@
+---
+title: "501_dt"
+author: "Sichen Lin"
+date: "10/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(Cairo)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+DF <- read.csv("Clean_df.csv",header = TRUE)
+DF
+```
+```{r}
+useless_column = c('bans','region','gameId','teamId','time','gold','avg_gold')
+DF_final <- DF[,!names(DF)%in%useless_column]
+DF_final
+```
+
+
+```{r}
+#split data
+library(dplyr)
+smp_size <- floor(0.75*nrow(DF_final))
+set.seed(1)
+train_index <- sample(seq_len(nrow(DF_final)),size = smp_size)
+train_df <- DF_final[train_index,]
+test_df <- DF_final[-train_index,]
+```
+```{r}
+
+
+DF_test_labels <- test_df$win
+test_df<- subset(test_df,select = -c(win))
+
+```
+```{r}
+train_df
+```
+
+
+```{r}
+fitR <- rpart(train_df$win~., data = train_df,control=rpart.control(minsplit=2, minbucket=2, cp=0.002))
+printcp(fitR)
+summary(fitR)
+```
+
+```{r}
+predictedR= predict(fitR,test_df, type="class")
+## Confusion Matrix
+table(predictedR,DF_test_labels)
+```
+
+
+```{r}
+fancyRpartPlot(fitR)
+```
+```{r}
+## Save the Decision Tree as a jpg image
+jpeg("DecisionTree_lol.jpg")
+fancyRpartPlot(fitR)
+dev.off()
+```
+
+
+```{r}
+fitR_1 <- rpart(train_df$win~., data = train_df,control=rpart.control(minsplit=2, minbucket=2, cp=0.002),parms=list(split='information'))
+printcp(fitR_1)
+summary(fitR_1)
+predictedR_1= predict(fitR_1,test_df, type="class")
+## Confusion Matrix
+table(predictedR_1,DF_test_labels)
+fancyRpartPlot(fitR_1)
+```
+```{r}
+jpeg("DecisionTree_lol1.jpg")
+fancyRpartPlot(fitR_1)
+dev.off()
+```
+
+
+
+
+
+```{r}
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
