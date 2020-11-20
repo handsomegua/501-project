@@ -1,0 +1,328 @@
+---
+title: "501_nb_discussion"
+author: "Sichen Lin"
+date: "11/10/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+library(Cairo)
+library(stringr)
+library(e1071)
+
+library(caret)
+library(naivebayes)
+library(mclust)
+library(rpart.plot)
+library(RColorBrewer)
+library(Cairo)
+# install.packages("philentropy")
+library(philentropy)
+# install.packages("forcats")
+library(forcats)
+# install.packages("lsa")
+library(lsa) #for cosine similarity
+library(philentropy)  ## for distance() which offers 46 metrics
+library(factoextra) ## for cluster vis, silhouette, etc.
+library(purrr)
+library(caTools)
+library(dplyr)
+library(textstem)
+library(stringr)
+#install.packages("stylo")
+
+library(stats)
+library(NbClust)
+library(mclust)
+library(wordcloud)
+library(tm)
+library(slam)
+library(quanteda)
+library(SnowballC)
+library(arules)
+library(proxy)
+library(readr)
+```
+```{r}
+
+#  nb  For record data 
+DF <- read.csv("Clean_df.csv",header = TRUE)
+head(DF)
+```
+```{r}
+useless_column = c('bans','region','gameId','teamId','time','gold',"dominionVictoryScore")
+DF_final <- DF[,!names(DF)%in%useless_column]
+head(DF_final)
+```
+```{r}
+library(dplyr)
+smp_size <- floor(0.75*nrow(DF_final))
+set.seed(1)
+train_index <- sample(seq_len(nrow(DF_final)),size = smp_size)
+train_df <- DF_final[train_index,]
+test_df <- DF_final[-train_index,]
+head(train_df)
+```
+
+```{r}
+DF_test_labels <- test_df$win
+test_df_final <- test_df
+test_df<- subset(test_df,select = -c(win))
+head(test_df)
+
+```
+```{r}
+dim(test_df)
+```
+
+
+```{r}
+NBwinningclassifier <- naiveBayes(as.factor(win)~.,data= train_df,na.action = na.pass )
+NBwinningclassifier
+```
+```{r}
+NBwinningclassifier_Prediction <- predict(NBwinningclassifier,test_df)
+plot(NBwinningclassifier_Prediction)
+```
+
+```{r}
+test_df
+```
+
+
+```{r}
+length(NBwinningclassifier_Prediction)
+length(test_df_final)
+```
+
+```{r}
+table(NBwinningclassifier_Prediction,test_df_final$win)
+```
+
+
+```{r}
+#svm for record data
+svm_column <- c("towerKills","inhibitorKills","baronKills","dragonKills","win","avg_gold")
+DF_svm <- DF_final <- DF[,names(DF)%in%svm_column]
+
+
+smp_size <- floor(0.75*nrow(DF_svm))
+set.seed(1)
+train_index <- sample(seq_len(nrow(DF_svm)),size = smp_size)
+train_df_svm <- DF_svm[train_index,]
+test_df_svm <- DF_svm[-train_index,]
+head(train_df_svm)
+
+DF_test_labels_svm <- test_df_svm$win
+test_df_svm<- subset(test_df_svm,select = -c(win))
+head(test_df_svm)
+
+
+
+svm_fit_linear <- svm(as.factor(win)~.,data= train_df_svm,kernel = "linear",cost = 0.1,scale = FALSE)
+svm_fit_linear_c1 <- svm(as.factor(win)~.,data= train_df_svm,kernel = "linear",cost = 2,scale = FALSE)
+svm_fit_poly <- svm(as.factor(win)~.,data= train_df_svm,kernel = "poly",cost = 2,scale = FALSE)
+print(svm_fit_linear)
+```
+
+```{r}
+pred_L <- predict(svm_fit_linear,test_df_svm,type = 'class')
+pred_poly <- predict(svm_fit_poly,test_df_svm,type ='class')
+pred_c1 <- predict(svm_fit_l,test_df_svm,type = 'class')
+```
+
+```{r}
+(L_table<-table(pred_L, DF_test_labels_svm))
+(poly_table<-table(pred_poly, DF_test_labels_svm))
+(c1_table<-table(pred_c1, DF_test_labels_svm))
+```
+```{r}
+length(pred_L)
+```
+
+```{r}
+length(train_df_svm$win)
+```
+
+```{r}
+
+```
+
+```{r}
+plot(svm_fit_linear, data=train_df_svm,towerKills~baronKills)
+plot(svm_fit_poly,data=train_df_svm,towerKills~baronKills)
+plot(svm_fit_linear_c1,data=train_df_svm,towerKills~baronKills)
+```   
+
+```{r}
+train_df
+```
+
+
+
+
+
+
+
+```{r}
+#text data
+
+corpus <- Corpus(DirSource('new_text_data'))
+```
+```{r}
+df = read.csv('DF_501.csv',header = TRUE)
+```
+```{r}
+DF_test_labels = df['tags']
+```
+```{r}
+DF_test_labels
+```
+
+
+
+```{r}
+corpus <- tm_map(corpus,tolower)
+corpus <- tm_map(corpus, removeWords, c("also", "that", "this", "with", "anly", "have",
+                                                          "class", "classes", "data",'break','next','while','for'))
+corpus<- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus,lemmatize_strings)
+
+Novels_dtm <- DocumentTermMatrix(corpus,
+                                 control = list(
+                                   #stopwords = TRUE, ## remove normal stopwords
+                                   wordLengths=c(4, 10), ## get rid of words of len 3 or smaller or larger than 15
+                                   removePunctuation = TRUE,
+                                   removeNumbers = TRUE,
+                                   tolower=TRUE,
+                                   stemming = TRUE,
+                                   remove_separators = TRUE
+                                   #stopwords = MyStopwords,
+                                   
+                                   #removeWords(MyStopwords),
+                                   #bounds = list(global = c(minTermFreq, maxTermFreq))
+                                 ))
+Novels_dtm_m = as.matrix(Novels_dtm)
+Novels_dtm_m  <- apply(Novels_dtm_m , 1, function(i) round(i/sum(i),3))
+Novels_dtm_m <- t(Novels_dtm_m)
+```
+```{r}
+Novels_DF <- as.data.frame(as.matrix(Novels_dtm))
+(Novels_DF)
+```
+```{r}
+Labeled_DF_Novels <- cbind(DF_test_labels, Novels_DF)
+```
+```{r}
+(Labeled_DF_Novels[1:5, 1:5])
+```
+```{r}
+rownames(Labeled_DF_Novels) <- c()
+(Labeled_DF_Novels[1:5, 1:5])
+```
+
+```{r}
+X = 3 
+(every_X_index<-seq(1,nrow(Labeled_DF_Novels),X))
+DF_Test<-Labeled_DF_Novels[every_X_index, ]
+DF_Train<-Labeled_DF_Novels[-every_X_index, ]
+(DF_Test[1:5, 1:5])
+(DF_Train[1:5, 1:5])
+```
+```{r}
+str(DF_Test$tags)
+str(DF_Train$tags)
+(DF_Testdata_Labels <- DF_Test$tags)
+str(DF_Testdata_Labels)
+DF_Test_NL<-DF_Test[ , -which(names(DF_Test) %in% c("tags"))]
+(DF_Test[1:5, 1:5])
+```
+```{r}
+
+```
+
+```{r}
+## REMOVE THE LABEL FROM THE TRAINING SET...
+DF_Train_Labels<-DF_Train$tags
+DF_Train_NL<-DF_Train[ , -which(names(DF_Train) %in% c("tags"))]
+(DF_Train_NL[1:5, 1:5])
+```
+
+```{r}
+NB_e1071_2<-naiveBayes(DF_Train_NL, as.factor(DF_Train_Labels), laplace = 3)
+NB_e1071_Pred <- predict(NB_e1071_2, DF_Test_NL)
+table(NB_e1071_Pred,DF_Testdata_Labels)
+plot(NB_e1071_Pred)
+
+##Visualize
+```
+```{r}
+head(DF_Train)
+```
+
+
+
+```{r}
+# SVM part
+svm_fit_text_linear <-svm(as.factor(tags)~.,DF_Train,kernal = 'linear',cost=.01,scale = FALSE,na.action = na.omit)
+svm_fit_text_poly <- svm(as.factor(tags)~.,DF_Train,kernal = 'poly',cost=.01,scale = FALSE,na.action = na.omit)
+print(svm_fit_text_linear)
+print(svm_fit_text_poly)
+```
+```{r}
+length(svm_fit_text_linear)
+```
+
+
+```{r}
+pred_svm_text <- predict(svm_fit_text_linear,DF_Test_NL,type = 'class')
+pred_svm_text_poly <- predict(svm_fit_text_poly,DF_Test_NL,type = 'class')
+```
+```{r}
+(Ptable <- table(pred_svm_text, DF_Testdata_Labels))
+(Ptable <- table(pred_svm_text_poly, DF_Testdata_Labels))
+```
+```{r}
+plot(svm_fit_text_linear,data = DF_Train,azir~mortal)
+plot(svm_fit_text_poly,data = DF_Train,bandl~betray)
+```
+
+
+
+```{r}
+length(DF_Train$azir)
+length(DF_Train$mortal)
+```
+
+```{r}
+head(DF_Train)
+```
+
+```{r}
+DF_Train$mortal
+```
+
+
+
+
+
+
+
+
+
+
+
+
